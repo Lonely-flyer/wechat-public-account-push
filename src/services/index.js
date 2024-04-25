@@ -1006,14 +1006,16 @@ export const getAggregatedData = async () => {
       .concat(wxMomentCopyrighting)
       .concat(wxPoisonChickenSoup)
       .concat(wxPoetryContent)
-      // [
-      //   {
-      //     name: 'wx_holidaytts_0',
-      //     value: '今天是工作日啊~',
-      //     color: getColor(),
-      //   },
-      // ]
-      .concat(wxHolidaytts)
+      .concat(
+        [
+          {
+            name: 'wx_holidaytts_0',
+            value: '今天是工作日啊~',
+            color: getColor(),
+          },
+        ],
+      )
+      // .concat(wxHolidaytts)
       .concat(tianxinZaoan)
       .concat(tianxinWanan)
 
