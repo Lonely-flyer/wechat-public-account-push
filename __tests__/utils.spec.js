@@ -1,4 +1,5 @@
 import MockDate from 'mockdate'
+// eslint-disable-next-line import/no-unresolved
 import { jest } from '@jest/globals'
 import {
   toLowerLine, getColor, randomNum, sortBirthdayTime, getConstellation, getWeatherCityInfo,

@@ -2,21 +2,18 @@ import axios from 'axios'
 import dayjs from 'dayjs'
 import { JSDOM } from 'jsdom'
 import cloneDeep from 'lodash/cloneDeep.js'
-import config from '../../config/exp-config.js'
+// import config from '../../config/exp-config.js'
+import getConfig from '../../config/index.cjs'
 import TEMPLATE_CONFIG from '../../config/template-config.cjs'
 import { DEFAULT_OUTPUT, TYPE_LIST, RUN_TIME_STORAGE } from '../store/index.js'
 import {
-  getConstellation,
-  randomNum,
-  sortBirthdayTime,
-  getColor,
-  toLowerLine,
-  getWeatherCityInfo,
-  sleep,
+  getConstellation, randomNum, sortBirthdayTime, getColor, toLowerLine, getWeatherCityInfo, sleep,
 } from '../utils/index.js'
 import { selfDayjs, timeZone } from '../utils/set-def-dayjs.js'
 
 axios.defaults.timeout = 10000
+
+const config = getConfig()
 
 // 使用单空行还是双空行
 const getLB = () => {
@@ -81,8 +78,7 @@ export const getAccessToken = async () => {
  */
 export const getWeatherIcon = (weather) => {
   let weatherIcon = '🌈'
-  const weatherIconList = ['☀️', '☁️', '⛅️',
-    '☃️', '⛈️', '🏜️', '🏜️', '🌫️', '🌫️', '🌪️', '🌧️']
+  const weatherIconList = ['☀️', '☁️', '⛅️', '☃️', '⛈️', '🏜️', '🏜️', '🌫️', '🌫️', '🌪️', '🌧️']
   const weatherType = ['晴', '阴', '云', '雪', '雷', '沙', '尘', '雾', '霾', '风', '雨']
 
   weatherType.forEach((item, index) => {
@@ -117,11 +113,13 @@ export const getWeather = async (province, city) => {
   }
   const url = `http://t.weather.itboy.net/api/weather/city/${cityInfo.city_code}`
 
-  const res = await axios.get(url, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  }).catch((err) => err)
+  const res = await axios
+    .get(url, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    .catch((err) => err)
 
   if (res.status === 200 && res.data && res.data.status === 200) {
     const commonInfo = res.data.data
@@ -176,41 +174,46 @@ export const getWeather = async (province, city) => {
  */
 export const getCIBA = async () => {
   const url = 'http://open.iciba.com/dsapi/'
-  const res = await axios.get(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
-    },
-  }).catch((err) => err)
+  const res = await axios
+    .get(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
+      },
+    })
+    .catch((err) => err)
 
   if (res.status === 200 && res) {
-    const data = res.data
-    const keys = [{
-      from: 'content',
-      to: 'note_en'
-    }, {
-      from: 'note',
-      to: 'note_ch'
-    }]
-    keys.forEach(obj => {
+    const { data } = res
+    const keys = [
+      {
+        from: 'content',
+        to: 'note_en',
+      },
+      {
+        from: 'note',
+        to: 'note_ch',
+      },
+    ]
+    keys.forEach((obj) => {
       const value = data[obj.from]
       const arr = []
       for (let j = 0, i = 0; j < value.length; j += 20) {
         arr.push({
           name: `wx_${obj.to}_${i}`,
           value: value.slice(j, j + 20),
-          color: getColor()
+          color: getColor(),
         })
         i++
       }
       data[`wx_${obj.to}`] = arr
-    }) 
+    })
 
     return {
-      noteEn: data['content'],
-      wxNoteEn: data['wx_note_en'],
-      noteCh: data['note'],
-      wxNoteCh: data['wx_note_ch'],
+      noteEn: data.content,
+      wxNoteEn: data.wx_note_en,
+      noteCh: data.note,
+      wxNoteCh: data.wx_note_ch,
     }
   }
   console.error('金山词霸每日一句: 发生错误', res)
@@ -241,14 +244,14 @@ export const getHolidaytts = async () => {
     arr.push({
       name: `wx_holidaytts_${i}`,
       value: data.slice(j, j + 20),
-      color: getColor()
+      color: getColor(),
     })
     i++
   }
 
   return {
     holidaytts: data,
-    wxHolidaytts: arr
+    wxHolidaytts: arr,
   }
 }
 
@@ -269,24 +272,26 @@ export const getOneTalk = async (type) => {
   const res = await axios.get(url).catch((err) => err)
 
   if (res && res.status === 200) {
-    const data = res.data
-    const keys = [{
-      from: 'hitokoto',
-      to: 'one_talk'
-    }]
-    keys.forEach(obj => {
+    const { data } = res
+    const keys = [
+      {
+        from: 'hitokoto',
+        to: 'one_talk',
+      },
+    ]
+    keys.forEach((obj) => {
       const value = data[obj.from]
       const arr = []
       for (let j = 0, i = 0; j < value.length; j += 20) {
         arr.push({
           name: `wx_${obj.to}_${i}`,
           value: value.slice(j, j + 20),
-          color: getColor()
+          color: getColor(),
         })
         i++
       }
       data[`wx_${obj.to}`] = arr
-    }) 
+    })
     return data
   }
 
@@ -311,9 +316,11 @@ export const getWordsFromApiShadiao = async (type) => {
   }
   const url = `https://api.shadiao.pro/${type}`
   try {
-    const res = await axios.get(url, {
-      responseType: 'json',
-    }).catch((err) => err)
+    const res = await axios
+      .get(url, {
+        responseType: 'json',
+      })
+      .catch((err) => err)
     return (res.data && res.data.data && res.data.data.text) || ''
   } catch (e) {
     console.error(`${typeNameMap[type]}：发生错误`, e)
@@ -330,21 +337,22 @@ export const getEarthyLoveWords = async () => {
     return ''
   }
 
-  const data = await getWordsFromApiShadiao('chp') || DEFAULT_OUTPUT.earthyLoveWords
+  let data = (await getWordsFromApiShadiao('chp')) || DEFAULT_OUTPUT.earthyLoveWords
 
   const arr = []
+  data = data.replace(/\s+/g, ' ')
   for (let j = 0, i = 0; j < data.length; j += 20) {
     arr.push({
       name: `wx_earthy_love_words_${i}`,
       value: data.slice(j, j + 20),
-      color: getColor()
+      color: getColor(),
     })
     i++
   }
 
   return {
     earthyLoveWords: data,
-    wxEarthyLoveWords: arr
+    wxEarthyLoveWords: arr,
   }
 }
 
@@ -356,21 +364,21 @@ export const getMomentCopyrighting = async () => {
   if (config.SWITCH && config.SWITCH.momentCopyrighting === false) {
     return ''
   }
-  const data = await getWordsFromApiShadiao('pyq') || DEFAULT_OUTPUT.momentCopyrighting
+  const data = (await getWordsFromApiShadiao('pyq')) || DEFAULT_OUTPUT.momentCopyrighting
 
   const arr = []
   for (let j = 0, i = 0; j < data.length; j += 20) {
     arr.push({
       name: `wx_moment_copyrighting_${i}`,
       value: data.slice(j, j + 20),
-      color: getColor()
+      color: getColor(),
     })
     i++
   }
 
   return {
     momentCopyrighting: data,
-    wxMomentCopyrighting: arr
+    wxMomentCopyrighting: arr,
   }
 }
 
@@ -383,21 +391,21 @@ export const getPoisonChickenSoup = async () => {
     return ''
   }
 
-  const data = await getWordsFromApiShadiao('du') || DEFAULT_OUTPUT.poisonChickenSoup
+  const data = (await getWordsFromApiShadiao('du')) || DEFAULT_OUTPUT.poisonChickenSoup
 
   const arr = []
   for (let j = 0, i = 0; j < data.length; j += 20) {
     arr.push({
       name: `wx_poison_chicken_soup_${i}`,
       value: data.slice(j, j + 20),
-      color: getColor()
+      color: getColor(),
     })
     i++
   }
 
   return {
     poisonChickenSoup: data,
-    wxPoisonChickenSoup: arr
+    wxPoisonChickenSoup: arr,
   }
 }
 
@@ -412,12 +420,14 @@ export const getPoetry = async () => {
 
   const url = 'https://v2.jinrishici.com/sentence'
   try {
-    const res = await axios.get(url, {
-      headers: {
-        'X-User-Token': 'FW8KNlfULPtZ9Ci6aNy8aTfPJPwI+/Ln',
-      },
-      responseType: 'json',
-    }).catch((err) => err)
+    const res = await axios
+      .get(url, {
+        headers: {
+          'X-User-Token': 'FW8KNlfULPtZ9Ci6aNy8aTfPJPwI+/Ln',
+        },
+        responseType: 'json',
+      })
+      .catch((err) => err)
     const { status, data, warning } = res.data || {}
     if (status !== 'success') {
       console.error('古诗古文：发生错误', warning || '')
@@ -430,7 +440,7 @@ export const getPoetry = async () => {
       wxContent.push({
         name: `wx_poetry_content_${i}`,
         value: content.slice(j, j + 20),
-        color: getColor()
+        color: getColor(),
       })
       i++
     }
@@ -466,22 +476,28 @@ export const getConstellationFortune = async (date, dateType) => {
   }
 
   const periods = ['今日', '明日', '本周', '本月', '今年']
-  const defaultType = [{
-    name: '综合运势',
-    key: 'comprehensiveHoroscope',
-  }, {
-    name: '爱情运势',
-    key: 'loveHoroscope',
-  }, {
-    name: '事业学业',
-    key: 'careerHoroscope',
-  }, {
-    name: '财富运势',
-    key: 'wealthHoroscope',
-  }, {
-    name: '健康运势',
-    key: 'healthyHoroscope',
-  }]
+  const defaultType = [
+    {
+      name: '综合运势',
+      key: 'comprehensiveHoroscope',
+    },
+    {
+      name: '爱情运势',
+      key: 'loveHoroscope',
+    },
+    {
+      name: '事业学业',
+      key: 'careerHoroscope',
+    },
+    {
+      name: '财富运势',
+      key: 'wealthHoroscope',
+    },
+    {
+      name: '健康运势',
+      key: 'healthyHoroscope',
+    },
+  ]
 
   // 未填写时段，则取今日
   if (!dateType) {
@@ -563,20 +579,20 @@ export const getCourseSchedule = (courseSchedule) => {
   const diff = selfDayjs().diff(benchmarkDate.set('day', 0).set('hour', 0).set('minute', 0).set('second', 0)
     .set('millisecond', 0), 'millisecond')
   const isSameKind = Math.floor(diff / 7 / 86400000) % 2 === 0
-  const kind = ((isSameKind && courseSchedule.benchmark.isOdd) || (!isSameKind && !courseSchedule.benchmark.isOdd)) ? 'odd' : 'even'
-  
-  const temp = ((courseSchedule.courses && courseSchedule.courses[kind] && courseSchedule.courses[kind][week]) || [])
+  const kind = (isSameKind && courseSchedule.benchmark.isOdd) || (!isSameKind && !courseSchedule.benchmark.isOdd) ? 'odd' : 'even'
+
+  const temp = (courseSchedule.courses && courseSchedule.courses[kind] && courseSchedule.courses[kind][week]) || []
   const schedule = temp.join(getLB())
   const wechatTestCourseSchedule = []
   temp.forEach((item, index) => {
     wechatTestCourseSchedule.push({
       name: toLowerLine(`wxCourseSchedule_${index}`),
       value: item,
-      color: getColor()
+      color: getColor(),
     })
   })
 
-  return {schedule, wechatTestCourseSchedule}
+  return { schedule, wechatTestCourseSchedule }
 }
 
 /**
@@ -585,11 +601,13 @@ export const getCourseSchedule = (courseSchedule) => {
 export const getBing = async () => {
   const url = 'https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1'
 
-  const res = await axios.get(url, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  }).catch((err) => err)
+  const res = await axios
+    .get(url, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    .catch((err) => err)
 
   if (res.data && res.data.images) {
     const imgUrl = `https://cn.bing.com/${res.data.images[0].url}`
@@ -614,13 +632,12 @@ export const getBirthdayMessage = (festivals) => {
     return ''
   }
 
-  if (Object.prototype.toString.call(festivals) !== '[object Array]'
-    || festivals.length === 0) {
+  if (Object.prototype.toString.call(festivals) !== '[object Array]' || festivals.length === 0) {
     festivals = null
   }
 
   // 计算重要节日倒数
-  const birthdayList = sortBirthdayTime((festivals || config.FESTIVALS || [])).map((it) => {
+  const birthdayList = sortBirthdayTime(festivals || config.FESTIVALS || []).map((it) => {
     if (!it.useLunar) {
       return it
     }
@@ -633,13 +650,9 @@ export const getBirthdayMessage = (festivals) => {
   })
   let resMessage = ''
   const wechatTestBirthdayMessage = []
-  
 
   birthdayList.forEach((item, index) => {
-    if (
-      !config.FESTIVALS_LIMIT
-      || (config.FESTIVALS_LIMIT && index < config.FESTIVALS_LIMIT)
-    ) {
+    if (!config.FESTIVALS_LIMIT || (config.FESTIVALS_LIMIT && index < config.FESTIVALS_LIMIT)) {
       let message = null
 
       // 生日相关
@@ -674,13 +687,13 @@ export const getBirthdayMessage = (festivals) => {
         wechatTestBirthdayMessage.push({
           name: toLowerLine(`wxBirthday_${index}`),
           value: message,
-          color: getColor()
+          color: getColor(),
         })
       }
     }
   })
 
-  return {resMessage, wechatTestBirthdayMessage}
+  return { resMessage, wechatTestBirthdayMessage }
 }
 
 /**
@@ -689,8 +702,7 @@ export const getBirthdayMessage = (festivals) => {
  * @returns
  */
 export const getDateDiffList = (customizedDateList) => {
-  if (Object.prototype.toString.call(customizedDateList) !== '[object Array]'
-    && Object.prototype.toString.call(config.CUSTOMIZED_DATE_LIST) !== '[object Array]') {
+  if (Object.prototype.toString.call(customizedDateList) !== '[object Array]' && Object.prototype.toString.call(config.CUSTOMIZED_DATE_LIST) !== '[object Array]') {
     return []
   }
   const dateList = customizedDateList || config.CUSTOMIZED_DATE_LIST
@@ -758,16 +770,21 @@ export const buildTianApi = async (apiType, params = null) => {
     return RUN_TIME_STORAGE[`${apiType}_${JSON.stringify(params)}_${count}`]
   }
 
-  const url = `http://api.tianapi.com/${apiType}/index`
-  const res = await axios.get(url, {
-    params: { key: config.TIAN_API.key, ...params },
-  }).catch((err) => err)
+  const url = `https://apis.tianapi.com/${apiType}/index`
+  const res = await axios
+    .get(url, {
+      params: { key: config.TIAN_API.key, ...params },
+    })
+    .catch((err) => err)
 
   if (res && res.data && res.data.code === 200) {
-    const result = (res.data.newslist || []).slice(0, count)
+    const r = res.data.result
+    const result = [r]
+    //  (res.data.result.content || []).slice(0, count)
+    console.log('apiType: ', apiType)
+    console.log('result: ', result)
 
     RUN_TIME_STORAGE[`${apiType}_${JSON.stringify(params)}_${count}`] = cloneDeep(result)
-
     return result
   }
 
@@ -779,13 +796,50 @@ export const buildTianApi = async (apiType, params = null) => {
  * 天行-早安心语
  * @returns {Promise<T>}
  */
-export const getTianApiMorningGreeting = () => buildTianApi('zaoan').then((res) => res[0] && res[0].content)
+export const getTianApiMorningGreeting = () => buildTianApi('zaoan').then((res) => {
+  if (res[0] && res[0].content) {
+    const { content } = res[0]
+
+    const tianxinZaoan = []
+    for (let j = 0, i = 0; j < content.length; j += 20) {
+      tianxinZaoan.push({
+        name: `tianxin_zaoan_${i}`,
+        value: content.slice(j, j + 20),
+        color: getColor(),
+      })
+      i++
+    }
+    return {
+      data: content,
+      arr: tianxinZaoan,
+    }
+  }
+  return null
+})
 
 /**
  * 天行-晚安心语
  * @returns {Promise<T>}
  */
-export const getTianApiEveningGreeting = () => buildTianApi('wanan').then((res) => res[0] && res[0].content)
+export const getTianApiEveningGreeting = () => buildTianApi('wanan').then((res) => {
+  if (res[0] && res[0].content) {
+    const { content } = res[0]
+    const tianxinWanan = []
+    for (let j = 0, i = 0; j < content.length; j += 20) {
+      tianxinWanan.push({
+        name: `tx_wanan_${i}`,
+        value: content.slice(j, j + 20),
+        color: getColor(),
+      })
+      i++
+    }
+    return {
+      data: content,
+      arr: tianxinWanan,
+    }
+  }
+  return null
+})
 
 /**
  * 天行-天气（付费）
@@ -819,32 +873,21 @@ export const getAggregatedData = async () => {
   const weekList = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
   // 获取金山词霸每日一句
   const {
-    noteEn = DEFAULT_OUTPUT.noteEn,
-    wxNoteEn = '',
-    noteCh = DEFAULT_OUTPUT.noteCh,
-    wxNoteCh = ''
+    noteEn = DEFAULT_OUTPUT.noteEn, wxNoteEn = '', noteCh = DEFAULT_OUTPUT.noteCh, wxNoteCh = '',
   } = await getCIBA()
   // 获取下一休息日
-  const {holidaytts, wxHolidaytts} = await getHolidaytts()
+  const { holidaytts, wxHolidaytts } = await getHolidaytts()
   // 获取每日一言
-  const {
-    hitokoto: oneTalk = DEFAULT_OUTPUT.oneTalk,
-    wx_one_talk: wxOneTalk = '',
-    from: talkFrom = DEFAULT_OUTPUT.talkFrom,
-  } = await getOneTalk(config.LITERARY_PREFERENCE)
+  const { hitokoto: oneTalk = DEFAULT_OUTPUT.oneTalk, wx_one_talk: wxOneTalk = '', from: talkFrom = DEFAULT_OUTPUT.talkFrom } = await getOneTalk(config.LITERARY_PREFERENCE)
   // 获取土味情话
-  const {earthyLoveWords, wxEarthyLoveWords} = await getEarthyLoveWords()
+  const { earthyLoveWords, wxEarthyLoveWords } = await getEarthyLoveWords()
   // 获取朋友圈文案
-  const {momentCopyrighting, wxMomentCopyrighting} = await getMomentCopyrighting()
+  const { momentCopyrighting, wxMomentCopyrighting } = await getMomentCopyrighting()
   // 获取毒鸡汤
-  const {poisonChickenSoup, wxPoisonChickenSoup} = await getPoisonChickenSoup()
+  const { poisonChickenSoup, wxPoisonChickenSoup } = await getPoisonChickenSoup()
   // 获取古诗古文 poetry
   const {
-    dynasty: poetryDynasty = DEFAULT_OUTPUT.poetryDynasty,
-    author: poetryAuthor = DEFAULT_OUTPUT.poetryAuthor,
-    title: poetryTitle = DEFAULT_OUTPUT.poetryTitle,
-    content: poetryContent,
-    wxContent: wxPoetryContent
+    dynasty: poetryDynasty = DEFAULT_OUTPUT.poetryDynasty, author: poetryAuthor = DEFAULT_OUTPUT.poetryAuthor, title: poetryTitle = DEFAULT_OUTPUT.poetryTitle, content: poetryContent, wxContent: wxPoetryContent,
   } = await getPoetry()
   // 获取插槽中的数据
   const slotParams = getSlotList().map((item) => ({ name: item.keyword, value: item.checkout, color: getColor() }))
@@ -879,32 +922,49 @@ export const getAggregatedData = async () => {
     const constellationFortune = await getConstellationFortune(user.horoscopeDate, user.horoscopeDateType)
 
     // 获取课表信息
-    const {schedule:courseSchedule, wechatTestCourseSchedule} = getCourseSchedule(user.courseSchedule || config.courseSchedule) || DEFAULT_OUTPUT.courseSchedule
+    const { schedule: courseSchedule, wechatTestCourseSchedule } = getCourseSchedule(user.courseSchedule || config.courseSchedule) || DEFAULT_OUTPUT.courseSchedule
 
     // 天行-早晚安
-    const tianApiGreeting = [{
-      name: toLowerLine('tianApiMorningGreeting'),
-      value: await getTianApiMorningGreeting(),
-      color: getColor(),
-    }, {
-      name: toLowerLine('tianApiEveningGreeting'),
-      value: await getTianApiEveningGreeting(),
-      color: getColor(),
-    }].filter((it) => it.value)
+    // const tianApiGreeting = [
+    // {
+    // name: toLowerLine("tianApiMorningGreeting"),
+    // value: await getTianApiMorningGreeting(),
+    // color: getColor(),
+    // },
+    // {
+    // name: toLowerLine("tianApiEveningGreeting"),
+    // value: await getTianApiEveningGreeting(),
+    // color: getColor(),
+    // },
+    // ].filter((it) => it.value);
+
+    let tianxinZaoan = []
+    const txZaoanRes = await getTianApiMorningGreeting()
+    if (txZaoanRes) tianxinZaoan = txZaoanRes.arr
+
+    let tianxinWanan = []
+    const txWananRes = await getTianApiEveningGreeting()
+    if (txWananRes) tianxinWanan = txWananRes.arr
 
     // 天行-天气
-    const tianApiWeather = (await getTianApiWeather(user) || []).map((it, index) => Object.keys((it)).filter((weatherKey) => ['province', 'area', 'weatherimg'].indexOf(weatherKey) === -1).map((key) => ({
-      name: toLowerLine(`tianApiWeather_${key}_${index}`),
-      value: it[key],
-      color: getColor(),
-    }))).flat()
+    const tianApiWeather = ((await getTianApiWeather(user)) || [])
+      .map((it, index) => Object.keys(it)
+        .filter((weatherKey) => ['province', 'area', 'weatherimg'].indexOf(weatherKey) === -1)
+        .map((key) => ({
+          name: toLowerLine(`tianApiWeather_${key}_${index}`),
+          value: it[key],
+          color: getColor(),
+        })))
+      .flat()
 
     // 天行-热榜
-    const tianApiNetworkHot = [{
-      name: toLowerLine('tianApiNetworkHot'),
-      value: await getTianApiNetworkHot(config.TIAN_API && config.TIAN_API.networkHotType),
-      color: getColor(),
-    }]
+    const tianApiNetworkHot = [
+      {
+        name: toLowerLine('tianApiNetworkHot'),
+        value: await getTianApiNetworkHot(config.TIAN_API && config.TIAN_API.networkHotType),
+        color: getColor(),
+      },
+    ]
     // 集成所需信息
     const wxTemplateParams = [
       { name: toLowerLine('toName'), value: user.name, color: getColor() },
@@ -929,11 +989,12 @@ export const getAggregatedData = async () => {
       { name: toLowerLine('poetryDynasty'), value: poetryDynasty, color: getColor() },
       { name: toLowerLine('poetryTitle'), value: poetryTitle, color: getColor() },
       { name: toLowerLine('courseSchedule'), value: courseSchedule, color: getColor() },
-    ].concat(weatherMessage)
+    ]
+      .concat(weatherMessage)
       .concat(constellationFortune)
       .concat(dateDiffParams)
       .concat(slotParams)
-      .concat(tianApiGreeting)
+    // .concat(tianApiGreeting)
       .concat(tianApiWeather)
       .concat(tianApiNetworkHot)
       .concat(wechatTestBirthdayMessage)
@@ -945,7 +1006,16 @@ export const getAggregatedData = async () => {
       .concat(wxMomentCopyrighting)
       .concat(wxPoisonChickenSoup)
       .concat(wxPoetryContent)
+      // [
+      //   {
+      //     name: 'wx_holidaytts_0',
+      //     value: '今天是工作日啊~',
+      //     color: getColor(),
+      //   },
+      // ]
       .concat(wxHolidaytts)
+      .concat(tianxinZaoan)
+      .concat(tianxinWanan)
 
     user.wxTemplateParams = wxTemplateParams
   }
@@ -1052,16 +1122,22 @@ const sendMessageByPushDeer = async (user, templateId, wxTemplateData) => {
   const url = 'https://api2.pushdeer.com/message/push'
 
   // 发送消息
-  const res = await axios.post(url, {
-    pushkey: user.id,
-    text: modelData.title,
-    desp: modelData.desc,
-    type: 'markdown',
-  }, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
-    },
-  }).catch((err) => err)
+  const res = await axios
+    .post(
+      url,
+      {
+        pushkey: user.id,
+        text: modelData.title,
+        desp: modelData.desc,
+        type: 'markdown',
+      },
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
+        },
+      },
+    )
+    .catch((err) => err)
 
   if (res.data && res.data.code === 0) {
     console.log(`${user.name}: 推送消息成功`)
@@ -1096,16 +1172,22 @@ const sendMessageByPushPlus = async (user, templateId, wxTemplateData) => {
 
   const url = 'http://www.pushplus.plus/send'
   // 发送消息
-  const res = await axios.post(url, {
-    token: user.id,
-    title: modelData.title,
-    content: modelData.desc,
-    template: 'markdown',
-  }, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  }).catch((err) => err)
+  const res = await axios
+    .post(
+      url,
+      {
+        token: user.id,
+        title: modelData.title,
+        content: modelData.desc,
+        template: 'markdown',
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    )
+    .catch((err) => err)
 
   if (res.data && res.data.code === 200) {
     console.log(`${user.name}: 推送消息成功`)
@@ -1140,10 +1222,12 @@ const sendMessageByServerChan = async (user, templateId, wxTemplateData) => {
 
   const url = `https://sctapi.ftqq.com/${user.id}.send`
   // 发送消息
-  const res = await axios.post(url, {
-    title: modelData.title,
-    desp: modelData.desc,
-  }).catch((err) => err)
+  const res = await axios
+    .post(url, {
+      title: modelData.title,
+      desp: modelData.desc,
+    })
+    .catch((err) => err)
 
   if (res.data && res.data.code === 0) {
     console.log(`${user.name}: 推送消息成功`)
@@ -1194,12 +1278,14 @@ const sendMessageByWeChatTest = async (user, templateId, wxTemplateData) => {
   }
 
   // 发送消息
-  const res = await axios.post(url, data, {
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
-    },
-  }).catch((err) => err)
+  const res = await axios
+    .post(url, data, {
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
+      },
+    })
+    .catch((err) => err)
 
   if (res.data && res.data.errcode === 0) {
     console.log(`${user.name}: 推送消息成功`)
@@ -1247,15 +1333,18 @@ export const sendMessage = async (templateId, user, params, usePassage) => {
   if (usePassage === 'push-deer') {
     console.log('使用push-deer推送')
     return sendMessageByPushDeer(user, templateId, wxTemplateData)
-  } if (usePassage === 'server-chan') {
+  }
+  if (usePassage === 'server-chan') {
     console.log('使用server-chan推送')
     return sendMessageByServerChan(user, templateId, wxTemplateData)
-  } if (usePassage === 'push-plus') {
+  }
+  if (usePassage === 'push-plus') {
     console.log('使用push-plus推送')
     return sendMessageByPushPlus(user, templateId, wxTemplateData)
   }
 
   console.log('使用微信测试号推送')
+  console.log('wxTemplateData', wxTemplateData)
   return sendMessageByWeChatTest(user, templateId, wxTemplateData)
 }
 
@@ -1283,12 +1372,7 @@ export const sendMessageReply = async (users, templateId = null, params = null, 
       console.log(`单次脚本已发送 ${maxPushOneMinute} 条消息，为避免推送服务器识别为恶意推送，脚本将休眠 ${config.SLEEP_TIME ? config.SLEEP_TIME / 1000 : 65} 秒。休眠结束后将自动推送剩下的消息。`)
       await sleep(config.SLEEP_TIME || 65000)
     }
-    resList.push(await sendMessage(
-      templateId || user.useTemplateId,
-      user,
-      params || user.wxTemplateParams,
-      usePassage,
-    ))
+    resList.push(await sendMessage(templateId || user.useTemplateId, user, params || user.wxTemplateParams, usePassage))
     if (RUN_TIME_STORAGE.pushNum) {
       RUN_TIME_STORAGE.pushNum += 1
     } else {

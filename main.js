@@ -5,12 +5,13 @@ import {
   getAggregatedData,
   getCallbackTemplateParams,
 } from './src/services/index.js'
-import config from './config/exp-config.js'
+import getConfig from './config/index.cjs'
 import cornTime from './config/server-config.js'
 import mainForTest from './main-for-test.js'
 import { RUN_TIME_STORAGE } from './src/store/index.js'
 
 export default async function mainForProd() {
+  const config = getConfig()
   // 获取accessToken
   console.log('\n\n')
   console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'))
@@ -66,6 +67,7 @@ const main = () => {
     console.log('======【定时推送服务已启动, enjoying it】======')
     console.log(`目前定时推送的配置为：【${cornTime}】`)
     schedule.scheduleJob(cornTime, () => {
+      console.log('任务开始......')
       mainForProd()
     })
   } else if (process.env.APP_MODE === 'prod') {
