@@ -36,7 +36,8 @@
 
 function getConfig() {
 	// 判断当前是上午还是晚上 国际时间
-	const isMorning = new Date().getHours() < 2 || new Date().getHours() >= 16;
+	// const isMorning = new Date().getHours() < 2 || new Date().getHours() >= 16;
+	const isMorning = true;
 	console.log('isMorning: ', isMorning);
 
 	const USER_CONFIG = {
