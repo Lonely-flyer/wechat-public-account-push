@@ -111,7 +111,7 @@ function getConfig() {
 
 		TIAN_API: {
 			key: "a88a21e99d2391b71134cd4f5bb3c93a",
-			// weather: 3,
+			weather: 1,
 			morningGreeting: true,
 			eveningGreeting: true,
 		},
